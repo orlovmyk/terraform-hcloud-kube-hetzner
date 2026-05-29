@@ -3,13 +3,41 @@ resource "random_password" "k3s_token" {
   special = false
 }
 
+locals {
+  microos_nodepool_server_types = concat(
+    [for node in values(local.control_plane_nodes) : node.server_type],
+    [for node in values(local.agent_nodes) : node.server_type],
+    [for nodepool in var.autoscaler_nodepools : nodepool.server_type],
+  )
+
+  uses_microos_arm_snapshot = length([
+    for server_type in local.microos_nodepool_server_types : server_type
+    if substr(server_type, 0, 3) == "cax"
+  ]) > 0
+
+  uses_microos_x86_snapshot = length([
+    for server_type in local.microos_nodepool_server_types : server_type
+    if substr(server_type, 0, 3) != "cax"
+  ]) > 0
+
+  microos_x86_snapshot_id = var.microos_x86_snapshot_id != "" ? var.microos_x86_snapshot_id : (
+    local.uses_microos_x86_snapshot ? data.hcloud_image.microos_x86_snapshot[0].id : ""
+  )
+
+  microos_arm_snapshot_id = var.microos_arm_snapshot_id != "" ? var.microos_arm_snapshot_id : (
+    local.uses_microos_arm_snapshot ? data.hcloud_image.microos_arm_snapshot[0].id : ""
+  )
+}
+
 data "hcloud_image" "microos_x86_snapshot" {
+  count             = var.microos_x86_snapshot_id == "" && local.uses_microos_x86_snapshot ? 1 : 0
   with_selector     = "microos-snapshot=yes"
   with_architecture = "x86"
   most_recent       = true
 }
 
 data "hcloud_image" "microos_arm_snapshot" {
+  count             = var.microos_arm_snapshot_id == "" && local.uses_microos_arm_snapshot ? 1 : 0
   with_selector     = "microos-snapshot=yes"
   with_architecture = "arm"
   most_recent       = true
