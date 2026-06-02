@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_No unreleased changes._
+
+---
+
+## [2.20.0] - 2026-06-02
+
 ### ⚠️ Upgrade Notes
 
 - **Cluster Autoscaler Config File** - Autoscaler nodepools now mount the generated Hetzner cluster config through a Secret-backed file to avoid Kubernetes annotation size failures on large configurations. If `autoscaler_nodepools` is enabled and you override `cluster_autoscaler_version`, use `v1.33.0` or newer. The module default remains compatible.
